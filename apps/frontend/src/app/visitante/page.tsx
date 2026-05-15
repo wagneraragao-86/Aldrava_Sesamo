@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { useSocket } from '@/hooks/use-socket';
 import { useVideoElement } from '@/hooks/use-video-element';
 import { useWebRtc } from '@/hooks/use-webrtc';
+import { apiFetch } from '@/lib/api';
 import type { VisitorCallPayload } from '@aldrava/shared';
 
 export default function VisitorPage() {
@@ -39,8 +40,13 @@ export default function VisitorPage() {
   }, [facing, rtc, socket]);
 
   async function startCall() {
+    if (!socket?.id) return;
     await rtc.startMedia(facing);
-    socket?.emit('visitor:start-call', { visitorName: 'Visitante' });
+    const response = await apiFetch<{ call: VisitorCallPayload }>('/calls/visitor', {
+      method: 'POST',
+      body: JSON.stringify({ visitorName: 'Visitante', visitorSocketId: socket.id }),
+    });
+    setCall(response.call);
   }
 
   async function switchCamera() {
@@ -100,7 +106,7 @@ export default function VisitorPage() {
             <PhoneOff size={18} />
           </Button>
         </div>
-        <Button className="w-full" onClick={startCall} disabled={!connected || Boolean(call)}>
+        <Button className="w-full" onClick={startCall} disabled={!connected || !socket?.id || Boolean(call)}>
           <Phone size={18} />
           {call ? 'Chamando...' : 'Iniciar chamada'}
         </Button>

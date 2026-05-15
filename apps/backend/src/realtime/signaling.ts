@@ -5,6 +5,8 @@ import type { JwtUser, SignalPayload, VisitorCallPayload } from '@aldrava/shared
 import { allowedOrigins, env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { prisma } from '../config/prisma.js';
+import { createVisitorCall } from '../modules/calls/calls.routes.js';
+import { publishVisitorCall, registerCallRealtime } from './call-events.js';
 
 type AuthedSocketData = {
   user?: JwtUser;
@@ -20,6 +22,7 @@ export function createRealtimeServer(server: Server) {
       credentials: true,
     },
   });
+  registerCallRealtime(io, residentRoom);
 
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token as string | undefined;
@@ -49,30 +52,8 @@ export function createRealtimeServer(server: Server) {
     }
 
     socket.on('visitor:start-call', async ({ visitorName }: { visitorName?: string } = {}) => {
-      const call = await prisma.call.create({
-        data: {
-          visitorName,
-          visitorSocketId: socket.id,
-          status: 'RINGING',
-          accessLogs: {
-            create: {
-              action: 'CALL_STARTED',
-              metadata: { socketId: socket.id },
-            },
-          },
-        },
-      });
-
-      const payload: VisitorCallPayload = {
-        callId: call.id,
-        visitorName,
-        visitorSocketId: socket.id,
-        createdAt: call.createdAt.toISOString(),
-      };
-
-      socket.join(call.id);
-      socket.emit('visitor:call-created', payload);
-      io.to(residentRoom).emit('resident:incoming-call', payload);
+      const payload = await createVisitorCall(socket.id, visitorName);
+      publishVisitorCall(payload);
     });
 
     socket.on('resident:answer-call', async ({ callId, visitorSocketId }: VisitorCallPayload) => {
