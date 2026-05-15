@@ -6,6 +6,10 @@ Este MVP precisa de HTTPS para camera/microfone no celular e de um backend com W
 - Backend: Railway
 - Banco: Supabase
 
+## Opcao recomendada
+
+Vercel nao e ideal para o backend atual porque o MVP usa Socket.IO/WebSocket persistente para signaling WebRTC. Publique o frontend na Vercel e o backend em um Web Service Node.js, como Railway ou Render.
+
 ## 1. Backend no Railway
 
 1. Suba este repositorio para o GitHub.
@@ -61,3 +65,28 @@ NEXT_PUBLIC_VISITOR_URL=https://SEU-FRONTEND.vercel.app/visitante
 - WebRTC P2P com STUN funciona em muitos cenarios, mas redes moveis e NAT restritivo podem exigir TURN.
 - O ESP32 precisa estar acessivel pelo backend. Para teste remoto real, use VPN, tunnel seguro ou exponha um endpoint HTTPS protegido em uma rede controlada.
 - Troque `JWT_SECRET`, `ESP32_TOKEN` e a senha do usuario demo antes de expor para terceiros.
+
+## Alternativa ao Railway: Render
+
+Se o Railway falhar, use o `render.yaml` da raiz.
+
+1. No Render, clique em `New > Blueprint`.
+2. Conecte o repositorio.
+3. O Render deve detectar `render.yaml`.
+4. Configure as variaveis marcadas como secret:
+
+```env
+DATABASE_URL=postgresql://...supabase.co:5432/postgres?sslmode=require
+JWT_SECRET=troque_por_um_segredo_forte
+ESP32_TOKEN=troque_por_um_token_forte
+ESP32_BASE_URL=http://esp32.local
+FRONTEND_URL=https://SEU-FRONTEND.vercel.app,http://localhost:3000
+```
+
+Depois copie a URL `https://...onrender.com` e use na Vercel:
+
+```env
+NEXT_PUBLIC_API_URL=https://SEU-BACKEND.onrender.com
+NEXT_PUBLIC_SOCKET_URL=https://SEU-BACKEND.onrender.com
+NEXT_PUBLIC_VISITOR_URL=https://SEU-FRONTEND.vercel.app/visitante
+```
