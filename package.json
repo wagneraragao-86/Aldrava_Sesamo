@@ -2,6 +2,9 @@
   "name": "aldrava-sesamo",
   "private": true,
   "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "MVP de portaria virtual residencial com WebRTC, Next.js, Node.js, PostgreSQL e ESP32.",
   "workspaces": [
     "packages/*",
@@ -13,7 +16,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "format": "prettier --write .",
-    "prepare": "husky install",
+    "prepare": "husky || true",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down -v"
   },
